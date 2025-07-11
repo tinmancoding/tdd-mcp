@@ -234,7 +234,8 @@ class TestRollbackEvent:
         event_data = {
             "from_phase": "implement",
             "to_phase": "write_test",
-            "reason": "Need to write additional test case first"
+            "reason": "Need to write additional test case first",
+            "cycle_number": 1
         }
         
         event = RollbackEvent(**event_data)
@@ -242,13 +243,15 @@ class TestRollbackEvent:
         assert event.from_phase == "implement"
         assert event.to_phase == "write_test"
         assert event.reason == "Need to write additional test case first"
+        assert event.cycle_number == 1
 
     def test_rollback_event_empty_reason_fails(self):
         """Test that empty reason fails validation."""
         event_data = {
             "from_phase": "implement",
             "to_phase": "write_test",
-            "reason": ""
+            "reason": "",
+            "cycle_number": 1
         }
         
         with pytest.raises(ValidationError) as exc_info:
@@ -326,7 +329,8 @@ class TestTDDEvent:
         rollback_data = {
             "from_phase": "implement",
             "to_phase": "write_test",
-            "reason": "Need to write additional test case first"
+            "reason": "Need to write additional test case first",
+            "cycle_number": 1
         }
         
         event_data = {
