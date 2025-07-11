@@ -5,7 +5,8 @@ from fastmcp import FastMCP
 from typing import List, Optional, Dict, Any
 
 from .repository.filesystem import FileSystemRepository
-from .utils.config import get_session_directory, get_log_level
+from .repository.memory import InMemoryRepository
+from .utils.config import get_session_directory, get_log_level, should_use_memory_repository
 from .utils.logging import configure_logging, get_logger
 from .handlers import session_handlers, workflow_handlers, logging_handlers, guidance_handlers
 from .domain.session import TDDSessionState
@@ -25,7 +26,12 @@ def start_server():
     logger.info(f"Log level set to: {log_level}")
     
     # Initialize repository
-    repository = FileSystemRepository(session_dir)
+    if should_use_memory_repository():
+        repository = InMemoryRepository()
+        logger.info("Using in-memory repository for session storage")
+    else:
+        repository = FileSystemRepository(session_dir)
+        logger.info(f"Using filesystem repository for session storage at: {session_dir}")
     
     # Initialize handlers with repository
     session_handlers._repository = repository

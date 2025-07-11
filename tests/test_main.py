@@ -50,6 +50,22 @@ class TestFastMCPServerSetup:
                 assert True  # Placeholder - will verify through handler calls
 
     @patch('tdd_mcp.main.FastMCP')
+    @patch('tdd_mcp.main.InMemoryRepository')
+    def test_uses_memory_repository_when_env_var_set(self, mock_memory_repo, mock_fastmcp_class):
+        """Test that start_server uses InMemoryRepository when TDD_MCP_SESSION_MEMORY is set to 'yes'."""
+        mock_server = Mock()
+        mock_fastmcp_class.return_value = mock_server
+        mock_memory_instance = Mock()
+        mock_memory_repo.return_value = mock_memory_instance
+        
+        with patch.dict(os.environ, {'TDD_MCP_SESSION_MEMORY': 'yes'}):
+            with patch.object(mock_server, 'run'):
+                start_server()
+        
+        # Verify InMemoryRepository was instantiated
+        mock_memory_repo.assert_called_once()
+
+    @patch('tdd_mcp.main.FastMCP')
     def test_repository_initialization_with_default_path(self, mock_fastmcp_class):
         """Test repository initialization uses default path when env var not set."""
         mock_server = Mock()

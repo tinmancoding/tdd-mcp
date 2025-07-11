@@ -50,7 +50,13 @@ To help user manage sessions efficiently:
 • "status" → You call get_current_state()
 • "log X" → You call log() with message X
 
-The system enforces TDD discipline - embrace the constraints for better code quality!"""
+The system enforces TDD discipline - embrace the constraints for better code quality!
+
+## IMPORTANT RULES
+• Write only ONE test per cycle
+- Write only the neccessary minimal code to make the one failing test pass
+
+"""
 
 
 def handle_quick_help() -> Dict[str, Any]:
