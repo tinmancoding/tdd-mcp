@@ -30,7 +30,7 @@ start_session(
     implementation_files: List[str], # Files where agent can write implementation
     run_tests: List[str],           # Commands/instructions for running test suite
     custom_rules: List[str]         # Additional rules appended to global TDD rules
-) -> session_id
+) -> str                            # Returns session_id
 
 update_session(
     goal?: str,                     # All parameters optional for updates
@@ -38,30 +38,31 @@ update_session(
     implementation_files?: List[str], 
     run_tests?: List[str],
     custom_rules?: List[str]
-) -> success
+) -> bool                           # Returns success status
 
-resume_session(session_id: str) -> current_state
-pause_session() -> session_id
-end_session() -> summary
+resume_session(session_id: str) -> TDDSessionState
+pause_session() -> str              # Returns session_id
+end_session() -> str                # Returns summary
 ```
 
 ### Workflow Control
 ```python
-next_phase(evidence_description: str) -> new_state
-rollback(reason: str) -> previous_state  # Navigate backward when needed
-get_current_state() -> detailed_state
+next_phase(evidence_description: str) -> TDDSessionState
+rollback(reason: str) -> TDDSessionState
+get_current_state() -> TDDSessionState
 ```
 
 ### Logging & History
 ```python
-log(message: str) -> success           # Add context without affecting state
-history() -> work_history              # Get formatted session history
+log(message: str) -> bool               # Returns success status
+history() -> List[str]                  # Returns formatted history entries
 ```
 
 ### Agent Guidance & Prompts
 ```python
-initialize() -> agent_guidance         # Provides comprehensive TDD-MCP usage instructions
-quick_help() -> command_shortcuts      # Shows common command patterns and shortcuts
+initialize() -> str                     # MCP Prompt - comprehensive TDD-MCP usage instructions
+start_session_wizard(goal: str) -> str  # MCP Prompt - guided session setup
+quick_help() -> Dict[str, Any]          # Returns command shortcuts and context
 ```
 
 ## Workflow State Machine
@@ -156,6 +157,11 @@ class TDDSessionRepository(ABC):
 # File-based implementation
 class FileSystemRepository(TDDSessionRepository):
     # Implements all abstract methods using JSON files and lock files
+
+# In-memory implementation for testing
+class InMemoryRepository(TDDSessionRepository):
+    # Implements all abstract methods using in-memory storage
+    # Used when TDD_MCP_USE_MEMORY_REPOSITORY environment variable is set
 ```
 
 ### Session Management
@@ -202,13 +208,16 @@ def get_or_create_session(session_id: str, repository: TDDSessionRepository) -> 
 def handle_start_session(goal: str, test_files: List[str], ...) -> str:
     # Returns session_id or raises exceptions
     
-def handle_next_phase(evidence_description: str) -> dict:
+def handle_next_phase(evidence_description: str) -> TDDSessionState:
     # Returns new state or raises exceptions
 
 def handle_initialize() -> str:
     # Returns comprehensive TDD-MCP usage instructions
     
-def handle_quick_help() -> dict:
+def handle_start_session_wizard(goal: str) -> str:
+    # Returns guided setup prompt for session parameters
+    
+def handle_quick_help() -> Dict[str, Any]:
     # Returns context-aware shortcuts and commands
     
 # Exception-based error handling
@@ -306,6 +315,7 @@ Lock file content:
 ### Environment Variables
 - **TDD_MCP_SESSION_DIR**: Custom session storage directory (default: `$PROJECT_ROOT/.tdd-mcp/sessions/`)
 - **TDD_MCP_LOG_LEVEL**: Logging verbosity - `debug|info|warn|error` (default: `info`)
+- **TDD_MCP_USE_MEMORY_REPOSITORY**: Use in-memory storage for testing (default: `false`)
 
 ## Error Handling & Concurrency
 
@@ -559,7 +569,7 @@ tdd_mcp/
 
 ### PyPI Distribution
 - Package name: `tdd-mcp`
-- Entry point: `tdd-mcp` command for starting server
+- Entry point: `tdd-mcp` command for starting server (points to `tdd_mcp.main:start_server`)
 - `pyproject.toml` with `uv` build system
 - Minimal dependencies: FastMCP V2, Pydantic
 - Python 3.12+ requirement

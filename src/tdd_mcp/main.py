@@ -174,16 +174,17 @@ def start_server():
         """
         return logging_handlers.handle_history()
     
-    # Agent Guidance & Prompts Tools
-    @mcp.tool
+    # Agent Guidance & Prompts
+    @mcp.prompt
     def initialize() -> str:
-        """Provide comprehensive TDD-MCP usage instructions for new agents.
-        
-        Returns:
-            Comprehensive guidance string for agents new to TDD-MCP
-        """
+        """Provide comprehensive TDD-MCP usage instructions for new agents."""
         return guidance_handlers.handle_initialize()
-    
+
+    @mcp.prompt
+    def start_session_wizard(goal: str) -> str:
+        """Wizard to refine the goal and prepare parameters for start_session tool call."""
+        return guidance_handlers.handle_start_session_wizard(goal)
+
     @mcp.tool
     def quick_help() -> Dict[str, Any]:
         """Provide context-aware shortcuts and help based on current session state.

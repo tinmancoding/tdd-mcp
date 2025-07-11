@@ -252,5 +252,30 @@ class TestConfigurationIntegration:
             assert True  # Placeholder
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+@patch('tdd_mcp.main.FastMCP')
+def test_start_session_wizard_prompt_is_listed(mock_fastmcp_class):
+    """Test that the start_session_wizard prompt is registered via mcp.prompt decorator."""
+    prompt_calls = []
+    class MockMCP:
+        def __init__(self, name):
+            self.name = name
+        def prompt(self, func):
+            prompt_calls.append(func.__name__)
+            return func
+        def tool(self, func):
+            return func
+        def run(self):
+            pass
+    mock_fastmcp_class.side_effect = MockMCP
+    from tdd_mcp.main import start_server
+    start_server()
+    assert 'start_session_wizard' in prompt_calls, "start_session_wizard prompt should be registered via mcp.prompt decorator"
+
+
+def test_start_session_wizard_includes_goal_in_response():
+    """Test that start_session_wizard includes the provided goal in its response."""
+    from tdd_mcp.handlers.guidance_handlers import handle_start_session_wizard
+    result = handle_start_session_wizard("Test Goal")
+    assert "Test Goal" in result, "The response should include the provided goal parameter."
+
+

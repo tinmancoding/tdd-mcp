@@ -6,6 +6,79 @@ from . import session_handlers
 from ..domain.exceptions import InvalidSessionError
 
 
+def handle_start_session_wizard(goal: str) -> str:
+    """Start the session wizard and guide the agent through TDD session setup.
+    
+    Args:
+        goal: Initial high-level goal provided by the user
+        
+    Returns:
+        Detailed guidance prompt for collecting TDD session requirements
+    """
+    return f"""🧙‍♂️ TDD Session Setup Analysis
+
+I want to start a new TDD session on the goal: **{goal}**
+
+But, before we start the session help me clarify the scope and the other parameters for the session_start tool call.
+
+Let's review the current implementation, the provided or mentioned documentation in the current context.
+Important: Do not start the session yet, just suggest parameters for the tool call.
+
+## CONTEXT ANALYSIS NEEDED
+
+Please analyze the current workspace and provide your suggestions for:
+
+### 1. REFINED GOAL & DEFINITION OF DONE
+Current goal: "{goal}"
+
+**Your task:** Review the current codebase/documentation and suggest:
+- A more specific, testable goal statement
+- Clear definition of done criteria
+- Scope boundaries for this TDD session
+
+### 2. TEST FILES ANALYSIS
+**Your task:** Examine the project structure and suggest:
+- Specific test file paths that align with the goal
+- Whether to create new test files or use existing ones
+- Follow the project's existing test organization patterns
+
+### 3. IMPLEMENTATION FILES ANALYSIS  
+**Your task:** Analyze the codebase and suggest:
+- Target implementation files that need to be created or modified
+- Consider the project's architecture and file organization
+- Identify dependencies and related modules
+
+### 4. TEST EXECUTION STRATEGY
+**Your task:** Review the project setup and suggest:
+- Appropriate test commands based on the project's test framework
+- Consider existing test configuration (pytest.ini, package.json, etc.)
+- Include any necessary setup or environment commands
+
+### 5. CUSTOM RULES ANALYSIS
+**Your task:** Based on the project context, suggest:
+- Language-specific TDD conventions
+- Project-specific coding standards
+- Testing framework best practices
+- Architecture constraints
+
+## EXPECTED OUTPUT FORMAT
+
+Please provide your analysis in this format:
+
+```
+SUGGESTED start_session() PARAMETERS:
+
+goal: "refined goal with clear definition of done"
+test_files: ["specific/path/to/test_file.py", "another/test/file.py"]
+implementation_files: ["specific/path/to/implementation.py", "another/file.py"]
+run_tests: ["pytest path/to/tests/", "additional commands if needed"]
+custom_rules: ["rule 1", "rule 2", "rule 3"]
+```
+
+**Remember:** Analyze the current context thoroughly before suggesting parameters. 
+Don't start the session - just provide the suggested parameters for review."""
+
+
 def handle_initialize() -> str:
     """Provide comprehensive TDD-MCP usage instructions for new agents.
     
@@ -14,7 +87,8 @@ def handle_initialize() -> str:
     """
     return """🔄 TDD-MCP Server Ready
 
-You now have access to a Test-Driven Development workflow management system. Here's how to use it effectively:
+You now have access to a Test-Driven Development workflow management system (TDD-MCP). 
+Here's how to use this MCP server effectively:
 
 ## WORKFLOW OVERVIEW
 TDD follows a strict 3-phase cycle:
@@ -22,7 +96,7 @@ TDD follows a strict 3-phase cycle:
 2. ✅ IMPLEMENT: Write minimal code to make the test pass  
 3. 🔧 REFACTOR: Improve code/tests (optional, can be skipped)
 
-## ESSENTIAL TOOLS
+## ESSENTIAL MCP TOOLS
 • start_session() - Begin new TDD session with goals and file specifications
 • get_current_state() - Check what phase you're in and what to do next
 • next_phase(evidence) - Move forward with evidence of what you accomplished
@@ -31,10 +105,10 @@ TDD follows a strict 3-phase cycle:
 • history() - View complete session timeline
 
 ## GETTING STARTED
-1. Always call get_current_state() first to check for existing sessions
-2. If no active session, use start_session() with clear goals
-3. Follow the suggested_next_action from get_current_state()
-4. Provide evidence when calling next_phase() - explain what you did
+1. Always call the get_current_state() tool first to check for existing sessions
+2. If no active session, use start_session() tool with clear goals
+3. Follow the suggested_next_action from the get_current_state() tool
+4. Provide evidence when calling next_phase() tool - explain what you did
 
 ## BEST PRACTICES  
 • Write tests in allowed test_files only during WRITE_TEST phase
@@ -53,8 +127,11 @@ To help user manage sessions efficiently:
 The system enforces TDD discipline - embrace the constraints for better code quality!
 
 ## IMPORTANT RULES
-• Write only ONE test per cycle
-- Write only the neccessary minimal code to make the one failing test pass
+
+- Important: Write only ONE test per cycle!
+- Important: Write only the neccessary minimal code to make the one failing test pass!
+
+Let's reply with "Kent Beck is my Hero." to indicate you understand the workflow and ready to begin.
 
 """
 

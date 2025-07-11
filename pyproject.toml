@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tdd-mcp = "tdd_mcp:main"
+tdd-mcp = "tdd_mcp.main:start_server"
 
 [dependency-groups]
 dev = [
