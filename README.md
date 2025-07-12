@@ -38,9 +38,12 @@ Choose your AI editor and add TDD-MCP to your configuration:
   "servers": {
     "tdd-mcp": {
       "type": "stdio",
-      "command": "uv",
-      "args": ["run", "python", "-m", "tdd_mcp.main"],
-      "cwd": "/path/to/tdd-mcp"
+      "command": "uvx",
+      "args": ["tdd-mcp"],
+      "env": {
+        "TDD_MCP_LOG_LEVEL": "info",
+        "TDD_MCP_SESSION_DIR": ".tdd-mcp/sessions/"
+      }
     }
   }
 }
@@ -52,6 +55,24 @@ Choose your AI editor and add TDD-MCP to your configuration:
 {
   "mcpServers": {
     "tdd-mcp": {
+      "command": "uvx",
+      "args": ["tdd-mcp"],
+      "env": {
+        "TDD_MCP_LOG_LEVEL": "info",
+        "TDD_MCP_SESSION_DIR": ".tdd-mcp/sessions/"
+      }
+    }
+  }
+}
+```
+
+**For Local Development (if you cloned the repo):**
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "tdd-mcp-dev": {
+      "type": "stdio",
       "command": "uv",
       "args": ["run", "python", "-m", "tdd_mcp.main"],
       "cwd": "/path/to/tdd-mcp"
