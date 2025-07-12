@@ -12,6 +12,17 @@ A Model Context Protocol (MCP) server that focuses on disciplined Test-Driven De
 - **🛡️ Guiding against TDD violations** like implementing before writing tests
 - **🧭 Providing contextual guidance** at every step
 
+## ⚠️ Important Considerations
+
+**Token Usage Warning**
+This MCP server significantly increases token usage for LLM interactions. Modern LLMs like Claude Sonnet can generate complete classes and test files in a single response, but TDD-MCP deliberately constrains this to enforce disciplined development. Consider the trade-off between development speed and TDD discipline.
+
+**Not Ideal For:**
+- Large-scale refactoring or architectural changes
+- Simple CRUD operations or boilerplate code
+- When you need to generate many files quickly
+- Prototyping or exploratory development phases
+
 ## Quickstart Guide
 
 Get up and running with TDD-MCP in minutes:
@@ -55,19 +66,17 @@ Open your AI editor and start a new conversation. The TDD-MCP server will automa
 
 ### 3. Initialize TDD-MCP
 
-Get your AI oriented with TDD-MCP by using the initialize prompt:
+Teach your AI editor the basics of TDD-MCP by using the built-in initialize prompt:
 
 **In VS Code with Copilot Chat:**
 ```
-@initialize
+@tdd-mcp.initialize
 ```
 
 **In other editors, paste this:**
-```
-Please use the initialize prompt to learn about TDD-MCP and how to use it effectively.
-```
 
-Your AI will receive comprehensive instructions on how to guide you through TDD sessions.
+Some AI editors may require a different format, but the goal is to trigger the `initialization` prompt. This prompt provides all the instructions on how to use TDD-MCP effectively in the Model's context.
+
 
 ### 4. Plan Your Session
 
@@ -199,16 +208,6 @@ The server provides guidance on which files to modify based on your current TDD 
 - For algorithms or business rules that benefit from incremental development
 - When you want to document your thought process through tests
 
-## ⚠️ Important Considerations
-
-**Token Usage Warning**
-This MCP server significantly increases token usage for LLM interactions. Modern LLMs like Claude Sonnet can generate complete classes and test files in a single response, but TDD-MCP deliberately constrains this to enforce disciplined development. Consider the trade-off between development speed and TDD discipline.
-
-**Not Ideal For:**
-- Large-scale refactoring or architectural changes
-- Simple CRUD operations or boilerplate code
-- When you need to generate many files quickly
-- Prototyping or exploratory development phases
 
 ## Available MCP Tools & Prompts
 
@@ -274,292 +273,6 @@ Get personalized guidance for setting up your TDD session. Analyzes your workspa
 #### `quick_help()`
 Get context-aware help and shortcuts based on your current phase and session state. Returns a dictionary with available actions and reminders.
 
-## Example Workflow
-
-Here's how a typical TDD session flows:
-
-```
-🎯 You: "I want to implement user authentication"
-🤖 AI: [uses start_session_wizard prompt with "user authentication"]
-
-🧙‍♂️ Server: "Analyzing your workspace... Here are suggested parameters for start_session()"
-🤖 AI: [calls start_session() with suggested parameters]
-
-📝 Phase: WRITE_TEST
-🤖 AI: [calls get_current_state()]
-🧭 Server: Returns TDDSessionState - "Write ONE failing test. Allowed files: tests/test_auth.py"
-
-🤖 AI: [writes failing test]
-🤖 AI: [calls next_phase("wrote failing test for login validation")]
-
-✅ Phase: IMPLEMENT  
-🧭 Server: Returns TDDSessionState - "Write minimal code to make test pass. Allowed files: src/auth.py"
-
-🤖 AI: [implements basic login function]
-🤖 AI: [calls next_phase("implemented login function, test passes")]
-
-🔧 Phase: REFACTOR
-🧭 Server: Returns TDDSessionState - "Improve code quality. You can modify both test and implementation files"
-
-🤖 AI: [refactors for better error handling]
-🤖 AI: [calls next_phase("improved error handling and code clarity")]
-
-📝 Phase: WRITE_TEST (Cycle 2)
-🧭 Server: Returns TDDSessionState - "Write your next failing test for the next increment"
-```
-
-## Quick Start
-
-### Installation
-
-```bash
-# Install with uv (recommended)
-uv add tdd-mcp
-
-# Or with pip
-pip install tdd-mcp
-```
-
-### Starting the Server
-
-```bash
-# Using the CLI command
-tdd-mcp
-
-# Or with uv
-uv run tdd-mcp
-
-# Or directly with Python
-python -m tdd_mcp.main
-
-# For development (runs from source)
-uv run python -m tdd_mcp.main
-```
-
-### Your First TDD Session
-
-Once connected through your AI editor:
-
-1. **Get oriented**: Ask your AI to use the `initialize` prompt to learn about TDD-MCP
-2. **Start guided setup**: Ask your AI to use the `start_session_wizard` prompt for your goal
-3. **Begin TDD**: Follow the AI's guidance to start your first session
-4. **Stay on track**: Use `get_current_state()` frequently to see what to do next
-
-The server will guide you through proper TDD discipline automatically!
-
-## Using with AI Editors
-
-The TDD-MCP server integrates seamlessly with AI editors that support the Model Context Protocol (MCP). The server runs in the background and communicates with your AI through the MCP protocol.
-
-### Connection Setup
-
-Choose your AI editor and follow the setup instructions:
-
-**🔵 VS Code with Copilot Chat** (Recommended)
-
-VS Code has native MCP support. Configure the server in your workspace or user settings:
-
-1. **Create MCP configuration** in `.vscode/mcp.json` (workspace) or your user profile:
-   ```json
-   {
-     "servers": {
-       "tdd-mcp": {
-         "type": "stdio",
-         "command": "uv",
-         "args": ["run", "python", "-m", "tdd_mcp.main"],
-         "cwd": "${workspaceFolder}/path/to/tdd-mcp"
-       }
-     }
-   }
-   ```
-
-2. **Test the server** by using `@` in Copilot Chat and selecting MCP tools
-
-### VS Code with Continue Extension
-
-Configure Continue to use the TDD-MCP server:
-
-1. **Add to Continue config** (`config.json`):
-   ```json
-   {
-     "experimental": {
-       "modelContextProtocolServer": {
-         "transport": {
-           "type": "stdio",
-           "command": "uv",
-           "args": ["run", "python", "-m", "tdd_mcp.main"],
-           "cwd": "/path/to/tdd-mcp"
-         }
-       }
-     }
-   }
-   ```
-
-2. **Use MCP context** by typing `@` and selecting "MCP" from the dropdown
-
-### Cursor
-
-Use the FastMCP CLI for easy installation:
-
-```bash
-# Install with FastMCP CLI (recommended)
-cd /path/to/tdd-mcp
-fastmcp install cursor src/tdd_mcp/main.py
-
-# Or manually configure in ~/.cursor/mcp.json
-```
-
-Manual configuration:
-```json
-{
-  "mcpServers": {
-    "tdd-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "-m", "tdd_mcp.main"],
-      "cwd": "/path/to/tdd-mcp"
-    }
-  }
-}
-```
-
-### Claude Code (CLI)
-
-Use the FastMCP CLI or manual configuration:
-
-```bash
-# With FastMCP CLI
-cd /path/to/tdd-mcp
-fastmcp install claude-code src/tdd_mcp/main.py
-
-# Or manual installation
-claude mcp add tdd-mcp -- uv run --with fastmcp fastmcp run src/tdd_mcp/main.py
-```
-
-### Claude Desktop
-
-Configure in the Claude Desktop config file:
-
-```bash
-# With FastMCP CLI
-cd /path/to/tdd-mcp
-fastmcp install claude-desktop src/tdd_mcp/main.py
-```
-
-Manual configuration location varies by OS:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-### Local Development Testing
-
-For development and debugging:
-
-```bash
-# Start the server manually to see logs
-cd /path/to/tdd-mcp
-uv run python -m tdd_mcp.main
-
-# Enable debug logging
-TDD_MCP_LOG_LEVEL=debug uv run python -m tdd_mcp.main
-
-# Use in-memory repository for testing (no file persistence)
-TDD_MCP_USE_MEMORY_REPOSITORY=true uv run python -m tdd_mcp.main
-```
-
-### Package Installation Method
-
-For production use, install as a package:
-
-```bash
-# Install from PyPI (when published)
-pip install tdd-mcp
-
-# Or install locally in development mode
-cd /path/to/tdd-mcp
-uv pip install -e .
-```
-
-Then use the simpler configuration:
-```json
-{
-  "command": "tdd-mcp",
-  "args": []
-}
-
-### What to Expect
-
-Once connected, TDD-MCP integrates seamlessly with your AI assistant. Here's what changes:
-
-**🎯 Your AI becomes TDD-aware**
-- It knows which TDD phase you're in
-- It suggests appropriate next actions
-- It helps you write tests before implementation
-- It prevents TDD violations by providing clear guidance on current phase
-- It helps you write tests before implementation
-
-**🔧 New conversation patterns**
-- "Let's start a TDD session for user authentication"
-- "What's my current TDD state?"
-- "Help me write a failing test for password validation"
-- "Move to the next phase - I wrote the test"
-- "Show me our TDD history"
-
-**📋 Guided workflow**
-- Your AI will call `get_current_state()` to understand where you are
-- It will suggest which files to modify based on your current phase
-- It will remind you of TDD rules and best practices
-- It will help you provide evidence for phase transitions
-
-### Testing Your Connection
-
-Try these conversations with your AI:
-
-1. **"Use the initialize prompt to learn about TDD-MCP"**
-   - Your AI will get comprehensive TDD-MCP instructions
-
-2. **"Start a TDD session for implementing a calculator"**
-   - Your AI will use the `start_session_wizard` prompt to guide you through setup
-
-3. **"What's the current TDD state?"**
-   - Your AI will call `get_current_state()` and explain the returned TDDSessionState
-
-4. **"Help me write a failing test for addition"**
-   - Your AI will guide you through writing a proper failing test
-
-### Debugging Connection Issues
-
-If you encounter connection issues:
-
-1. **Check MCP configuration** - ensure the command and args are correct
-2. **Verify working directory** - the `cwd` should point to the tdd-mcp project
-3. **Test manual startup** to see error messages:
-   ```bash
-   cd /path/to/tdd-mcp
-   uv run python -m tdd_mcp.main
-   ```
-4. **Enable verbose logging** by setting environment variable:
-   ```bash
-   TDD_MCP_LOG_LEVEL=debug uv run python -m tdd_mcp.main
-   ```
-5. **Check editor logs** - most editors have MCP debugging logs available
-
-### Example Session Flow
-
-A typical session might look like:
-
-```
-User: "Initialize TDD-MCP and start a session for a string utility library"
-AI: [Uses initialize prompt, then start_session_wizard prompt, then calls start_session()]
-
-User: "What should I do next?"
-AI: [Calls get_current_state() and explains the TDDSessionState]
-
-User: "I wrote a failing test for string reversal"
-AI: [Calls next_phase() with evidence, receives new TDDSessionState]
-
-User: "Show me the session history"
-AI: [Calls history() and displays the list of formatted history entries]
-```
 
 ## How Session Management Works
 
@@ -618,90 +331,6 @@ The server provides guidance on which files should be modified based on your cur
 
 *Note: This is guidance provided to your AI assistant through the MCP tools - the server doesn't enforce file system restrictions. Your AI can still choose to modify any files, but the server helps it understand which files are appropriate for each TDD phase.*
 
-## Architecture
-
-### Event Sourcing
-- **Complete Audit Trail**: Every action, phase change, and log entry preserved
-- **Rollback Capability**: Navigate backward through phases when needed
-- **State Consistency**: Current state calculated from authoritative event stream
-- **Future-Proof**: New event types can be added without breaking existing sessions
-
-### Repository Pattern
-- **Pluggable Storage**: Abstract repository interface with filesystem implementation
-- **Concurrency Safety**: Lock file mechanism prevents concurrent session access
-- **Session Persistence**: JSON event streams survive server restarts
-
-### MCP Integration
-- **FastMCP V2**: Built on the latest MCP framework
-- **Rich Tool Set**: 12 comprehensive tools for session and workflow management
-- **Error Handling**: Structured error responses with recovery suggestions
-
-## Configuration
-
-### Environment Variables
-
-- **`TDD_MCP_SESSION_DIR`**: Custom session storage directory (default: `.tdd-mcp/sessions/`)
-- **`TDD_MCP_LOG_LEVEL`**: Logging verbosity - `debug|info|warn|error` (default: `info`)
-- **`TDD_MCP_USE_MEMORY_REPOSITORY`**: Use in-memory storage for testing (default: `false`)
-
-### Session Structure
-
-Sessions are stored as JSON event streams:
-
-```json
-{
-  "schema_version": "1.0",
-  "events": [
-    {
-      "timestamp": "2025-07-11T10:30:00Z",
-      "event_type": "session_started",
-      "data": {
-        "goal": "Implement user authentication",
-        "test_files": ["tests/test_auth.py"],
-        "implementation_files": ["src/auth.py"],
-        "run_tests": ["pytest tests/test_auth.py -v"]
-      }
-    }
-  ]
-}
-```
-
-## Tips & Best Practices
-
-### Getting Started Right
-- **Always use the `initialize` prompt first** - it teaches your AI how to use TDD-MCP effectively
-- **Use the `start_session_wizard` prompt** - it analyzes your workspace and suggests optimal session parameters
-- **Check state frequently** - call `get_current_state()` to stay oriented (returns TDDSessionState)
-
-### Effective TDD Sessions
-- **Write clear goals** - "implement user login with email/password validation"
-- **Keep tests small** - test one behavior at a time
-- **Provide good evidence** - describe what you accomplished when moving phases
-- **Use logging** - call `log()` to capture your thought process
-
-### Common Patterns
-```
-# Starting a new feature
-"Let's start a TDD session for user registration"
-
-# Checking where you are
-"What's my current TDD state?"
-
-# Moving through phases
-"I wrote a failing test for email validation, move to implement phase"
-
-# When stuck
-"Show me the session history to see what we've done"
-
-# Taking a break
-"Pause this session, I'll continue tomorrow"
-```
-
-### Troubleshooting
-- **"No active session" error?** Call `start_session()` or `resume_session()`
-- **Can't modify files?** Check your current phase with `get_current_state()`
-- **Lost context?** Call `history()` to see your complete journey
-- **Need to backtrack?** Use `rollback("reason")` to go back a phase
 
 ## Development
 
@@ -782,6 +411,55 @@ uv pip install -e .
 # Publish to PyPI (maintainers only)
 uv publish
 ```
+
+## Architecture
+
+### Event Sourcing
+- **Complete Audit Trail**: Every action, phase change, and log entry preserved
+- **Rollback Capability**: Navigate backward through phases when needed
+- **State Consistency**: Current state calculated from authoritative event stream
+- **Future-Proof**: New event types can be added without breaking existing sessions
+
+### Repository Pattern
+- **Pluggable Storage**: Abstract repository interface with filesystem implementation
+- **Concurrency Safety**: Lock file mechanism prevents concurrent session access
+- **Session Persistence**: JSON event streams survive server restarts
+
+### MCP Integration
+- **FastMCP V2**: Built on the latest MCP framework
+- **Rich Tool Set**: 12 comprehensive tools for session and workflow management
+- **Error Handling**: Structured error responses with recovery suggestions
+
+## Configuration
+
+### Environment Variables
+
+- **`TDD_MCP_SESSION_DIR`**: Custom session storage directory (default: `.tdd-mcp/sessions/`)
+- **`TDD_MCP_LOG_LEVEL`**: Logging verbosity - `debug|info|warn|error` (default: `info`)
+- **`TDD_MCP_USE_MEMORY_REPOSITORY`**: Use in-memory storage for testing (default: `false`)
+
+### Session Structure
+
+Sessions are stored as JSON event streams:
+
+```json
+{
+  "schema_version": "1.0",
+  "events": [
+    {
+      "timestamp": "2025-07-11T10:30:00Z",
+      "event_type": "session_started",
+      "data": {
+        "goal": "Implement user authentication",
+        "test_files": ["tests/test_auth.py"],
+        "implementation_files": ["src/auth.py"],
+        "run_tests": ["pytest tests/test_auth.py -v"]
+      }
+    }
+  ]
+}
+```
+
 
 ## Contributing
 
