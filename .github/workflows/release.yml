@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      deploy_to_pypi:
+        description: 'Deploy to PyPI (production)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write  # Required for trusted publishing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+    
+    - name: Install dependencies
+      run: uv sync --dev
+    
+    - name: Run tests
+      run: uv run pytest -v
+    
+    - name: Extract version from tag
+      id: version
+      run: |
+        if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+    
+    - name: Update version in pyproject.toml
+      if: github.ref_type == 'tag'
+      run: |
+        sed -i 's/version = ".*"/version = "${{ steps.version.outputs.version }}"/' pyproject.toml
+    
+    - name: Update version in __init__.py
+      if: github.ref_type == 'tag'
+      run: |
+        sed -i 's/__version__ = ".*"/__version__ = "${{ steps.version.outputs.version }}"/' src/tdd_mcp/__init__.py
+    
+    - name: Build package
+      run: uv build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        retention-days: 7
+
+  test-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/tdd-mcp
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        attestations: true
+
+  pypi:
+    needs: [build, test-pypi]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy_to_pypi == 'true' || (github.ref_type == 'tag' && github.event_name == 'workflow_dispatch')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/tdd-mcp
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        attestations: true
+
+  release:
+    needs: [build, test-pypi]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
